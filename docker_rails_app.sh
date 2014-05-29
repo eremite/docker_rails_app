@@ -2,7 +2,14 @@
 
 file=.env && test -f $file && source $file
 
-dblink="--link $db:db"
+if [ -n "$app" ]; then
+  echo $app
+else
+  echo 'No app found.'
+  exit 1
+fi
+
+db_link="--link $db:db"
 
 command="$1"
 shift

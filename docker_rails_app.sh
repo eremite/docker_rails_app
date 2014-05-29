@@ -19,12 +19,22 @@ if [ $command = "b" ]; then # build
 fi
 
 if [ $command = "r" ]; then # rails
-  docker run -i --rm $db_link -v $directory:/app --entrypoint /usr/local/bin/bundle $app exec ruby "$@"
+  if [ ${rails_version%.*} = "2" ]; then
+    executable=ruby
+  else
+    executable=rails
+  fi
+  docker run -i --rm $db_link -v $directory:/app --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
   find . \! -user vagrant | xargs -I % sh -c 'sudo chmod g+w %; sudo chown vagrant:vagrant %'
 fi
 
 if [ $command = "s" ]; then # rails server
-  docker run -i --rm $db_link -p 3000:3000 -v $directory:/app --entrypoint /usr/local/bin/bundle $app exec ruby ./script/server
+  if [ ${rails_version%.*} = "2" ]; then
+    executable='ruby ./script/server'
+  else
+    executable='rails server'
+  fi
+  docker run -i --rm $db_link -p 3000:3000 -v $directory:/app --entrypoint /usr/local/bin/bundle $app exec $executable
 fi
 
 if [ $command = "k" ]; then # rake

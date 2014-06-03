@@ -34,6 +34,10 @@ if [ $command = "s" ]; then # rails server
   else
     executable='rails server'
   fi
+  running_server_id=`docker ps | grep 3000/tcp | awk '{print $1}'`
+  if [ -n "$running_server_id" ]; then
+    docker stop $running_server_id
+  fi
   docker run -i --rm $db_link -p 3000:3000 -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable
 fi
 

@@ -43,6 +43,7 @@ if [ $command = "s" ]; then # rails server
   if [ -n "$running_server_id" ]; then
     docker stop $running_server_id
   fi
+  rm -f $directory/tmp/pids/server.pid
   docker run -i --rm $db_link -p 3000:3000 -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable
 fi
 

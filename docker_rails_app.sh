@@ -19,7 +19,7 @@ if [ $command = "b" ]; then # build
 fi
 
 if [ $command = "bundle" ]; then # bundle
-  docker run -i --rm $db_link -v $directory:/app $extra $app /usr/local/bin/bundle
+  docker run -i --rm $db_link -v $directory:/app $extra $app /usr/local/bin/bundle "$@"
   find . \! -user vagrant | xargs -I % sh -c 'sudo chmod g+w %; sudo chown vagrant:vagrant %'
 fi
 

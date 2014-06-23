@@ -15,7 +15,7 @@ command="$1"
 shift
 
 if [ $command = "b" ]; then # build
-  docker build -t $app .
+  docker build --force-rm -t $app .
 fi
 
 if [ $command = "bundle" ]; then # bundle

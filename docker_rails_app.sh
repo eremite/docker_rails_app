@@ -1,6 +1,6 @@
 #!/bin/bash
 
-file=.env && test -f $file && source $file
+file=.docker_environment && test -f $file && source $file
 
 if [ -z "$app" ]; then
   echo 'No app found.'

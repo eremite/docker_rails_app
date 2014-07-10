@@ -11,6 +11,20 @@ if [ -z "$app" ]; then
   exit 1
 fi
 
+if [ -n "$elasticsearch" ]; then
+  elasticsearch_directory='/home/vagrant/elasticsearch'
+  mkdir -p $elasticsearch_directory
+  if [ ! -f "$elasticsearch/elasticsearch.yml" ]; then
+    echo "path:" > $elasticsearch/elasticsearch.yml
+    echo "  logs: /data/log" >> $elasticsearch/elasticsearch.yml
+    echo "  data: /data/data" >> $elasticsearch/elasticsearch.yml
+  fi
+  if [ -n "$elasticsearch" ]; then
+    docker start elasticsearch || docker run -d --name=elasticsearch -p 9200:9200 -p 9300:9300 -v $elasticsearch_directory:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
+    extra="$extra --link elasticsearch:es"
+  fi
+fi
+
 # docker inspect --format=' ' $db
 # if [ $? -ne 0 ]; then
 if [ $db = "mysql" ]; then

@@ -14,15 +14,13 @@ fi
 if [ -n "$elasticsearch" ]; then
   elasticsearch_directory='/home/vagrant/elasticsearch'
   mkdir -p $elasticsearch_directory
-  if [ ! -f "$elasticsearch/elasticsearch.yml" ]; then
-    echo "path:" > $elasticsearch/elasticsearch.yml
-    echo "  logs: /data/log" >> $elasticsearch/elasticsearch.yml
-    echo "  data: /data/data" >> $elasticsearch/elasticsearch.yml
+  if [ ! -f "$elasticsearch_directory/elasticsearch.yml" ]; then
+    echo "path:" > $elasticsearch_directory/elasticsearch.yml
+    echo "  logs: /data/log" >> $elasticsearch_directory/elasticsearch.yml
+    echo "  data: /data/data" >> $elasticsearch_directory/elasticsearch.yml
   fi
-  if [ -n "$elasticsearch" ]; then
-    docker start elasticsearch || docker run -d --name=elasticsearch -p 9200:9200 -p 9300:9300 -v $elasticsearch_directory:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
-    extra="$extra --link elasticsearch:es"
-  fi
+  docker start elasticsearch || docker run -d --name=elasticsearch -p 9200:9200 -p 9300:9300 -v $elasticsearch_directory:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
+  extra="$extra --link elasticsearch:es -e ELASTICSEARCH_URL=es:9200"
 fi
 
 # docker inspect --format=' ' $db

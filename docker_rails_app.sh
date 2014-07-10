@@ -79,7 +79,7 @@ if [ $command = "dbload" ]; then # dbload
   echo "#!/bin/sh" > dbload.sh
   chmod +x dbload.sh
   if [ $db = "mysql" ]; then
-    mysql_connection="mysql -uadmin -pdocker -h db $app"
+    mysql_connection="mysql -u $db_username -p $db_password -h db $app"
     echo "for table in \$($mysql_connection -e 'show tables' | awk '{ print \$1}' | grep -v '^Tables')" >> dbload.sh
     echo "do" >> dbload.sh
     echo "  $mysql_connection -e \"drop table \$table\"" >> dbload.sh
@@ -89,11 +89,11 @@ if [ $command = "dbload" ]; then # dbload
     docker run -i --rm $db_link -v $directory:/app $extra $app ./dbload.sh
     rm db.sql
   else
-    echo "/usr/bin/psql $app --username=$DB_USERNAME --host=db -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
-    echo "/usr/bin/pg_restore --username=$DB_USERNAME --host=db --no-acl --no-owner --jobs=2 --dbname=$app db.dump" >> dbload.sh
+    echo "/usr/bin/psql $app --username=$db_username --host=db -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
+    echo "/usr/bin/pg_restore --username=$db_username --host=db --no-acl --no-owner --jobs=2 --dbname=$app db.dump" >> dbload.sh
     chmod +x dbload.sh
     cp gitignore/db.dump .
-    docker run -i --rm $db_link -v $directory:/app -e PGPASSWORD=$DB_PASSWORD $extra $app /app/dbload.sh
+    docker run -i --rm $db_link -v $directory:/app -e PGPASSWORD=$db_password $extra $app /app/dbload.sh
     rm db.dump
   fi
   rm dbload.sh

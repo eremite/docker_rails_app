@@ -6,6 +6,10 @@ db_directory='/home/vagrant'
 db_username='docker'
 db_password='docker'
 
+function fix_file_permissions {
+  find . \! -user vagrant -print0 | xargs -0 -I % sh -c 'sudo chmod g+w "%"; sudo chown vagrant:vagrant "%"'
+}
+
 if [ -z "$app" ]; then
   echo 'No app found.'
   exit 1
@@ -46,7 +50,7 @@ fi
 
 if [ $command = "bundle" ]; then # bundle
   docker run -i --rm $db_link -v $directory:/app $extra $app /usr/local/bin/bundle "$@"
-  find . \! -user vagrant | xargs -I % sh -c 'sudo chmod g+w %; sudo chown vagrant:vagrant %'
+  fix_file_permissions
 fi
 
 if [ $command = "r" ]; then # rails
@@ -57,7 +61,7 @@ if [ $command = "r" ]; then # rails
   fi
   echo "docker run -i --rm $db_link -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable \"$@\""
   docker run -i --rm $db_link -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
-  find . \! -user vagrant | xargs -I % sh -c 'sudo chmod g+w %; sudo chown vagrant:vagrant %'
+  fix_file_permissions
 fi
 
 if [ $command = "s" ]; then # rails server

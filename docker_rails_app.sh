@@ -2,13 +2,15 @@
 
 file=.docker_environment && test -f $file && source $file
 
-db_directory='/home/vagrant'
+directory=$(pwd)
 db_username='docker'
 db_password='docker'
-gitignore_directory='gitignore'
+gitignore_directory="/vagrant/gitignores/$(basename $directory)"
+db_dump_directory="$gitignore_directory/tmp"
+code_volume="--volumes-from data -v $gitignore_directory:$gitignore_directory"
 
 function fix_file_permissions {
-  find . \! -user vagrant -print0 | xargs -0 -I % sh -c 'sudo chmod g+w "%"; sudo chown vagrant:vagrant "%"'
+  find . \! -user dev -print0 | xargs -0 -I % sh -c 'sudo chmod g+w "%"; sudo chown dev:dev "%"'
 }
 
 if [ -z "$app" ]; then
@@ -24,7 +26,7 @@ if [ -n "$elasticsearch" ]; then
     echo "  logs: /data/log" >> $elasticsearch_directory/elasticsearch.yml
     echo "  data: /data/data" >> $elasticsearch_directory/elasticsearch.yml
   fi
-  docker start elasticsearch || docker run -d --name=elasticsearch -p 9200:9200 -p 9300:9300 -v $elasticsearch_directory:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
+  sudo docker start elasticsearch || sudo docker run -d --name=elasticsearch -p 9200:9200 -p 9300:9300 -v $elasticsearch_directory:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
   extra="$extra --link elasticsearch:es -e ELASTICSEARCH_URL=es:9200"
 fi
 
@@ -32,10 +34,10 @@ fi
 # if [ $? -ne 0 ]; then
 if [ $db = "mysql" ]; then
   db_username='admin'
-  docker start mysql || docker run -d --name=mysql -p 3306:3306 -v $db_directory/mysql:/var/lib/mysql -e MYSQL_PASS="$db_password" tutum/mysql
+  sudo docker start mysql || sudo docker run -d --name=mysql -p 3306:3306 -e MYSQL_PASS="$db_password" tutum/mysql
 fi
 if [ $db = "postgresql" ]; then
-  docker start postgresql || docker run -d --name=postgresql -p 5432:5432 -v $db_directory/postgresql:/data -e POSTGRESQL_USER=$db_username -e POSTGRESQL_PASS=$db_password kamui/postgresql
+  sudo docker start postgresql || sudo docker run -d --name=postgresql -p 5432:5432 -e POSTGRESQL_USER=$db_username -e POSTGRESQL_PASS=$db_password kamui/postgresql
 fi
 
 if [ -z "$db_link" ]; then
@@ -46,11 +48,11 @@ command="$1"
 shift
 
 if [ $command = "b" ]; then # build
-  docker build --force-rm -t $app .
+  sudo docker build --force-rm -t $app .
 fi
 
 if [ $command = "bundle" ]; then # bundle
-  docker run -i --rm $db_link -v $directory:/app $extra $app /usr/local/bin/bundle "$@"
+  sudo docker run -i --rm $db_link $code_volume $extra $app /usr/local/bin/bundle "$@"
   fix_file_permissions
 fi
 
@@ -60,8 +62,8 @@ if [ $command = "r" ]; then # rails
   else
     executable=rails
   fi
-  echo "docker run -i --rm $db_link -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable \"$@\""
-  docker run -i --rm $db_link -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
+  echo "sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable \"$@\""
+  sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
   fix_file_permissions
 fi
 
@@ -71,29 +73,30 @@ if [ $command = "s" ]; then # rails server
   else
     executable='rails server'
   fi
-  running_server_id=`docker ps | grep 3000/tcp | awk '{print $1}'`
+  running_server_id=`sudo docker ps | grep 3000/tcp | awk '{print $1}'`
   if [ -n "$running_server_id" ]; then
-    docker stop $running_server_id
+    sudo docker stop $running_server_id
   fi
   sudo rm -f $directory/tmp/pids/server.pid
-  echo "docker run -i --rm $db_link -p 3000:3000 -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable"
-  docker run -i --rm $db_link -p 3000:3000 -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec $executable
+  echo "sudo docker run -i --rm $db_link -p 3000:3000 $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable"
+  sudo docker run -i --rm $db_link -p 3000:3000 $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable
 fi
 
 if [ $command = "k" ]; then # rake
-  docker run -i --rm $db_link -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec rake "$@"
+  sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec rake "$@"
 fi
 
 if [ $command = "t" ]; then # test
-  docker run -i --rm $db_link -v $directory:/app $extra --entrypoint /usr/local/bin/bundle $app exec guard
+  sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec guard
 fi
 
 if [ $command = "bash" ]; then # bash
-  docker run -i --rm $db_link -v $directory:/app $extra $app /bin/bash -i
+  echo "sudo docker run -i --rm $db_link $code_volume $extra $app /bin/bash -i"
+  sudo docker run -i --rm $db_link $code_volume $extra $app /bin/bash -i
 fi
 
 if [ $command = "dbfetch" ]; then # dbfetch
-  mkdir -p $gitignore_directory
+  mkdir -p $db_dump_directory
   if grep -q heroku .git/config; then
     if [ $1 ]; then
       remote="$1"
@@ -101,21 +104,21 @@ if [ $command = "dbfetch" ]; then # dbfetch
       remote='staging'
     fi
     heroku pgbackups:capture -r $remote
-    curl -o $gitignore_directory/db.dump `heroku pgbackups:url -r $remote`
+    curl -o $db_dump_directory/db.dump `heroku pgbackups:url -r $remote`
   else
     if [ $1 ]; then
       server=$1
     else
       server=$app
     fi
-    scp daniel@$server:~/db.sql.gz $gitignore_directory/
+    scp daniel@$server:~/db.sql.gz $db_dump_directory/
   fi
-  if [ -e $gitignore_directory/db.sql.gz ]; then
-    cp $gitignore_directory/db.sql.gz $gitignore_directory/db.$(date +"%Y.%m.%d").sql.gz
-    gunzip -f $gitignore_directory/db.sql.gz
+  if [ -e $db_dump_directory/db.sql.gz ]; then
+    cp $db_dump_directory/db.sql.gz $db_dump_directory/db.$(date +"%Y.%m.%d").sql.gz
+    gunzip -f $db_dump_directory/db.sql.gz
   fi
-  if [ -e $gitignore_directory/db.dump ]; then
-    cp $gitignore_directory/db.dump $gitignore_directory/db.$(date +"%Y.%m.%d").dump
+  if [ -e $db_dump_directory/db.dump ]; then
+    cp $db_dump_directory/db.dump $db_dump_directory/db.$(date +"%Y.%m.%d").dump
   fi
 fi
 
@@ -129,15 +132,15 @@ if [ $command = "dbload" ]; then # dbload
     echo "  $mysql_connection -e \"drop table \$table\"" >> dbload.sh
     echo "done" >> dbload.sh
     echo "$mysql_connection < db.sql" >> dbload.sh
-    cp $gitignore_directory/db.sql .
-    docker run -i --rm $db_link -v $directory:/app $extra $app ./dbload.sh
+    cp $db_dump_directory/db.sql .
+    sudo docker run -i --rm $db_link $code_volume $extra $app ./dbload.sh
     rm db.sql
   else
     echo "/usr/bin/psql $app --username=$db_username --host=db -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
     echo "/usr/bin/pg_restore --username=$db_username --host=db --no-acl --no-owner --jobs=2 --dbname=$app db.dump" >> dbload.sh
     chmod +x dbload.sh
-    cp $gitignore_directory/db.dump .
-    docker run -i --rm $db_link -v $directory:/app -e PGPASSWORD=$db_password $extra $app /app/dbload.sh
+    cp $db_dump_directory/db.dump .
+    sudo docker run -i --rm $db_link $code_volume -e PGPASSWORD=$db_password $extra $app /app/dbload.sh
     rm db.dump
   fi
   rm dbload.sh

@@ -5,7 +5,8 @@ file=.docker_environment && test -f $file && source $file
 directory=$(pwd)
 db_username='docker'
 db_password='docker'
-gitignore_directory="/vagrant/gitignores/$(basename $directory)"
+
+gitignore_directory="$PRIVATE_APP_CONFIG_DIR/$(basename $directory)"
 db_dump_directory="$gitignore_directory/tmp"
 code_volume="--volumes-from data -v $gitignore_directory:$gitignore_directory"
 

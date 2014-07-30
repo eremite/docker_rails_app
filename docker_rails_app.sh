@@ -6,9 +6,8 @@ directory=$(pwd)
 db_username='docker'
 db_password='docker'
 
-gitignore_directory="$PRIVATE_APP_CONFIG_DIR/$(basename $directory)"
-db_dump_directory="$gitignore_directory/tmp"
-code_volume="--volumes-from data -v $gitignore_directory:$gitignore_directory"
+db_dump_directory="$PRIVATE_APP_CONFIG_DIR/$(basename $directory)/tmp"
+code_volume="--volumes-from data-code --volumes-from data-private"
 
 function fix_file_permissions {
   find . \! -user dev -print0 | xargs -0 -I % sh -c 'sudo chmod g+w "%"; sudo chown dev:dev "%"'

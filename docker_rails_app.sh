@@ -69,7 +69,7 @@ if [ $command = "r" ]; then # rails
   else
     executable=rails
   fi
-  docker_do run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
+  docker_do run -it --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
   fix_file_permissions
 fi
 
@@ -84,7 +84,7 @@ if [ $command = "s" ]; then # rails server
     docker_do stop $running_server_id
   fi
   sudo rm -f $directory/tmp/pids/server.pid
-  docker_do run -i --rm $db_link -p 3000:3000 $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable
+  docker_do run -it --rm $db_link -p 3000:3000 $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable
 fi
 
 if [ $command = "k" ]; then # rake
@@ -92,11 +92,11 @@ if [ $command = "k" ]; then # rake
 fi
 
 if [ $command = "t" ]; then # test
-  docker_do run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec guard
+  docker_do run -it --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec guard
 fi
 
 if [ $command = "bash" ]; then # bash
-  docker_do run -i --rm $db_link $code_volume $extra $app /bin/bash -i
+  docker_do run -it --rm $db_link $code_volume $extra $app /bin/bash --login
 fi
 
 if [ $command = "dbfetch" ]; then # dbfetch

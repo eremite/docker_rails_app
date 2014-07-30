@@ -1,5 +1,7 @@
 #!/bin/bash
 
+docker_do() { echo "+ sudo docker $@" ; sudo docker "$@" ; }
+
 file=.docker_environment && test -f $file && source $file
 
 directory=$(pwd)
@@ -26,7 +28,7 @@ if [ -n "$elasticsearch" ]; then
     echo "  logs: /data/log" >> $elasticsearch_directory/elasticsearch.yml
     echo "  data: /data/data" >> $elasticsearch_directory/elasticsearch.yml
   fi
-  sudo docker start elasticsearch || sudo docker run -d --name=elasticsearch -p 9200:9200 -p 9300:9300 -v $elasticsearch_directory:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
+  docker_do start elasticsearch || docker_do run -d --name=elasticsearch -p 9200:9200 -p 9300:9300 -v $elasticsearch_directory:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
   extra="$extra --link elasticsearch:es -e ELASTICSEARCH_URL=es:9200"
 fi
 
@@ -34,10 +36,10 @@ fi
 # if [ $? -ne 0 ]; then
 if [ $db = "mysql" ]; then
   db_username='admin'
-  sudo docker start mysql || sudo docker run -d --name=mysql -p 3306:3306 -e MYSQL_PASS="$db_password" tutum/mysql
+  docker_do start mysql || docker_do run -d --name=mysql -p 3306:3306 -e MYSQL_PASS="$db_password" tutum/mysql
 fi
 if [ $db = "postgresql" ]; then
-  sudo docker start postgresql || sudo docker run -d --name=postgresql -p 5432:5432 -e POSTGRESQL_USER=$db_username -e POSTGRESQL_PASS=$db_password kamui/postgresql
+  docker_do start postgresql || docker_do run -d --name=postgresql -p 5432:5432 -e POSTGRESQL_USER=$db_username -e POSTGRESQL_PASS=$db_password kamui/postgresql
 fi
 
 if [ -z "$db_link" ]; then
@@ -51,14 +53,13 @@ if [ $command = "b" ]; then # build
   fullpath=$(readlink -f Dockerfile)
   rm Dockerfile
   cp $fullpath Dockerfile
-  echo "sudo docker build --force-rm -t $app ."
-  sudo docker build --force-rm -t $app .
+  docker_do build --force-rm -t $app .
   rm Dockerfile
   ln -s $fullpath Dockerfile
 fi
 
 if [ $command = "bundle" ]; then # bundle
-  sudo docker run -i --rm $db_link $code_volume $extra $app /usr/local/bin/bundle "$@"
+  docker_do run -i --rm $db_link $code_volume $extra $app /usr/local/bin/bundle "$@"
   fix_file_permissions
 fi
 
@@ -68,8 +69,7 @@ if [ $command = "r" ]; then # rails
   else
     executable=rails
   fi
-  echo "sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable \"$@\""
-  sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
+  docker_do run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable "$@"
   fix_file_permissions
 fi
 
@@ -79,26 +79,24 @@ if [ $command = "s" ]; then # rails server
   else
     executable='rails server'
   fi
-  running_server_id=`sudo docker ps | grep 3000/tcp | awk '{print $1}'`
+  running_server_id=`docker_do ps | grep 3000/tcp | awk '{print $1}'`
   if [ -n "$running_server_id" ]; then
-    sudo docker stop $running_server_id
+    docker_do stop $running_server_id
   fi
   sudo rm -f $directory/tmp/pids/server.pid
-  echo "sudo docker run -i --rm $db_link -p 3000:3000 $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable"
-  sudo docker run -i --rm $db_link -p 3000:3000 $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable
+  docker_do run -i --rm $db_link -p 3000:3000 $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec $executable
 fi
 
 if [ $command = "k" ]; then # rake
-  sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec rake "$@"
+  docker_do run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec rake "$@"
 fi
 
 if [ $command = "t" ]; then # test
-  sudo docker run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec guard
+  docker_do run -i --rm $db_link $code_volume $extra --entrypoint /usr/local/bin/bundle $app exec guard
 fi
 
 if [ $command = "bash" ]; then # bash
-  echo "sudo docker run -i --rm $db_link $code_volume $extra $app /bin/bash -i"
-  sudo docker run -i --rm $db_link $code_volume $extra $app /bin/bash -i
+  docker_do run -i --rm $db_link $code_volume $extra $app /bin/bash -i
 fi
 
 if [ $command = "dbfetch" ]; then # dbfetch

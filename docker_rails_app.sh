@@ -48,7 +48,13 @@ command="$1"
 shift
 
 if [ $command = "b" ]; then # build
+  fullpath=$(readlink -f Dockerfile)
+  rm Dockerfile
+  cp $fullpath Dockerfile
+  echo "sudo docker build --force-rm -t $app ."
   sudo docker build --force-rm -t $app .
+  rm Dockerfile
+  ln -s $fullpath Dockerfile
 fi
 
 if [ $command = "bundle" ]; then # bundle

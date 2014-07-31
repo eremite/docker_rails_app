@@ -8,7 +8,7 @@ directory=$(pwd)
 db_username='docker'
 db_password='docker'
 
-db_dump_directory="$PRIVATE_APP_CONFIG_DIR/$(basename $directory)/tmp"
+db_dump_directory="$PERSONAL/$(basename $directory)/tmp"
 code_volume="--volumes-from data-code --volumes-from data-private"
 
 function fix_file_permissions {

@@ -46,7 +46,7 @@ command="$1"
 shift
 
 if [ $command = "b" ]; then # build
-  if [ -h "$relative_path" ]; then # if symlink
+  if [ -h Dockerfile ]; then # if symlink
     fullpath=$(readlink -f Dockerfile)
     rm Dockerfile
     cp $fullpath Dockerfile

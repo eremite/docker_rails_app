@@ -144,7 +144,7 @@ if [ $command = "dbload" ]; then # dbload
     echo "/usr/bin/pg_restore --username=$db_username --host=db --no-acl --no-owner --jobs=2 --dbname=$app db.dump" >> dbload.sh
     chmod +x dbload.sh
     cp $db_dump_directory/db.dump .
-    sudo docker run -i --rm $db_link $code_volume -e PGPASSWORD=$db_password $extra $app /app/dbload.sh
+    sudo docker run -i --rm $db_link $code_volume -e PGPASSWORD=$db_password $extra $app ./dbload.sh
     rm db.dump
   fi
   rm dbload.sh

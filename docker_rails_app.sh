@@ -9,7 +9,7 @@ db_username='docker'
 db_password='docker'
 
 db_dump_directory="$PERSONAL/$(basename $directory)/tmp"
-code_volume="--volumes-from data-code --volumes-from data-private"
+code_volume="--volumes-from code --volumes-from personal"
 
 function fix_file_permissions {
   find . \! -user dev -print0 | xargs -0 -I % sh -c 'sudo chmod g+w "%"; sudo chown dev:dev "%"'

@@ -5,20 +5,16 @@ docker_do() { echo "+ sudo docker $@" ; sudo docker "$@" ; }
 file=.docker_environment && test -f $file && source $file
 
 directory=$(pwd)
+test -z "$app" && app=$(basename $directory)
 db_username='docker'
 db_password='docker'
 
-db_dump_directory="$PERSONAL/$(basename $directory)/tmp"
+db_dump_directory="$PERSONAL/$app/tmp"
 code_volume="--volumes-from code --volumes-from personal"
 
 function fix_file_permissions {
   find . \! -user dev -print0 | xargs -0 -I % sh -c 'sudo chmod g+w "%"; sudo chown dev:dev "%"'
 }
-
-if [ -z "$app" ]; then
-  echo 'No app found.'
-  exit 1
-fi
 
 if [ -n "$elasticsearch" ]; then
   elasticsearch_directory='/home/vagrant/elasticsearch'

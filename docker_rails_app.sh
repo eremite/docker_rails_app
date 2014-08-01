@@ -50,12 +50,16 @@ command="$1"
 shift
 
 if [ $command = "b" ]; then # build
-  fullpath=$(readlink -f Dockerfile)
-  rm Dockerfile
-  cp $fullpath Dockerfile
-  docker_do build --force-rm -t $app .
-  rm Dockerfile
-  ln -s $fullpath Dockerfile
+  if [ -h "$relative_path" ]; then # if symlink
+    fullpath=$(readlink -f Dockerfile)
+    rm Dockerfile
+    cp $fullpath Dockerfile
+    docker_do build --force-rm -t $app .
+    rm Dockerfile
+    ln -s $fullpath Dockerfile
+  else
+    docker_do build --force-rm -t $app .
+  fi
 fi
 
 if [ $command = "bundle" ]; then # bundle

@@ -31,11 +31,13 @@ fi
 # docker inspect --format=' ' $db
 # if [ $? -ne 0 ]; then
 if grep -q mysql $directory/config/database.yml; then
+  db=mysql
   db_username='admin'
-  docker_do start mysql || docker_do run -d --name=mysql -p 3306:3306 -e MYSQL_PASS="$db_password" tutum/mysql
+  docker_do start $db || docker_do run -d --name=mysql -p 3306:3306 -e MYSQL_PASS="$db_password" tutum/mysql
 fi
 if grep -q postgres $directory/config/database.yml; then
-  docker_do start postgresql || docker_do run -d --name=postgresql -p 5432:5432 -e POSTGRESQL_USER=$db_username -e POSTGRESQL_PASS=$db_password kamui/postgresql
+  db=postgresql
+  docker_do start $db || docker_do run -d --name=postgresql -p 5432:5432 -e POSTGRESQL_USER=$db_username -e POSTGRESQL_PASS=$db_password kamui/postgresql
 fi
 
 if [ -z "$db_link" ]; then

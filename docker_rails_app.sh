@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker_do() { echo "+ sudo docker $@" ; sudo docker "$@" ; }
+docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
 file=.docker_environment && test -f $file && source $file
 

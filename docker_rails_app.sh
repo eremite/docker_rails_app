@@ -46,7 +46,15 @@ if [ ! -e fig.yml ]; then
     db_link="--link $db:db -e DB_NAME=$app -e DB_USERNAME=$db_username -e DB_PASSWORD=$db_password"
   fi
 
-fi # fig
+else # using fig
+  if grep -q mysql $directory/config/database.yml; then
+    db=mysql
+    db_username='root'
+  fi
+  if grep -q postgres $directory/config/database.yml; then
+    db=postgresql
+  fi
+fi
 
 command="$1"
 shift
@@ -164,7 +172,7 @@ if [ $command = "dbload" ]; then # dbload
   echo "#!/bin/sh" > dbload.sh
   chmod +x dbload.sh
   if [ $db = "mysql" ]; then
-    mysql_connection="mysql -u $db_username -p'$db_password' -h db $app"
+    mysql_connection="mysql -u $db_username -p'$db_password' -h db_1 $app"
     echo "for table in \$($mysql_connection -e 'show tables' | awk '{ print \$1}' | grep -v '^Tables')" >> dbload.sh
     echo "do" >> dbload.sh
     echo "  $mysql_connection -e \"drop table \$table\"" >> dbload.sh
@@ -178,8 +186,8 @@ if [ $command = "dbload" ]; then # dbload
     fi
     rm db.sql
   else
-    echo "/usr/bin/psql $app --username=$db_username --host=db -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
-    echo "/usr/bin/pg_restore --username=$db_username --host=db --no-acl --no-owner --jobs=2 --dbname=$app db.dump" >> dbload.sh
+    echo "/usr/bin/psql $app --username=$db_username --host=db_1 -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
+    echo "/usr/bin/pg_restore --username=$db_username --host=db_1 --no-acl --no-owner --jobs=2 --dbname=$app db.dump" >> dbload.sh
     chmod +x dbload.sh
     cp $db_dump_directory/db.dump .
     if [ -e fig.yml ]; then

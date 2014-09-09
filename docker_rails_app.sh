@@ -53,6 +53,7 @@ else # using fig
   fi
   if grep -q postgres $directory/config/database.yml; then
     db=postgresql
+    db_username='postgres'
   fi
 fi
 

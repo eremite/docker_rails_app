@@ -9,7 +9,7 @@ test -z "$app" && app=$(basename $directory)
 db_username='docker'
 db_password='docker'
 
-db_dump_directory="$PERSONAL/$app/tmp"
+db_dump_directory="$META/$app/tmp"
 code_volume="--volumes-from data"
 
 function fix_file_permissions {

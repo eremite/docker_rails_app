@@ -109,7 +109,7 @@ if [ $command = "dbfetch" ]; then # dbfetch
 fi
 
 if [ $command = "dbload" ]; then # dbload
-  echo "#!/bin/sh" > dbload.sh
+  echo '#!/bin/sh' > dbload.sh
   chmod +x dbload.sh
   if [ $db = "mysql" ]; then
     mysql_connection="mysql -u $db_username -p'$db_password' -h db_1 $app"
@@ -122,11 +122,13 @@ if [ $command = "dbload" ]; then # dbload
     fig_do run --rm web sh ./dbload.sh
     rm db.sql
   else
-    echo "/usr/bin/psql $app --username=$db_username --host=db_1 -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
-    echo "/usr/bin/pg_restore --username=$db_username --host=db_1 --no-acl --no-owner --jobs=2 --dbname=$app db.dump" >> dbload.sh
+    echo "/usr/bin/psql $app --username=$db_username --host=postgres -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
+    echo "/usr/bin/pg_restore --username=$db_username --host=postgres --no-acl --no-owner --jobs=2 --dbname=$app /tmp/work/db.dump" >> dbload.sh
     chmod +x dbload.sh
     cp $db_dump_directory/db.dump .
-    fig_do run --rm web sh ./dbload.sh
+    postgres_container_id=`docker ps | grep "postgres" | awk '{print $1}'`
+    postgres_container_name=`docker inspect --format='{{.Name}}' $postgres_container_id`
+    docker_do run -v $(pwd):/tmp/work --link $postgres_container_name:postgres --rm postgres sh -c '/tmp/work/dbload.sh'
     rm db.dump
   fi
   rm dbload.sh

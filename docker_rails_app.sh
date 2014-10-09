@@ -112,23 +112,24 @@ if [ $command = "dbload" ]; then # dbload
   echo '#!/bin/sh' > dbload.sh
   chmod +x dbload.sh
   if [ $db = "mysql" ]; then
-    mysql_connection="mysql -u $db_username -p'$db_password' -h db_1 $app"
+    mysql_connection="mysql -u $db_username -p'$db_password' -h mysql $app"
     echo "for table in \$($mysql_connection -e 'show tables' | awk '{ print \$1}' | grep -v '^Tables')" >> dbload.sh
     echo "do" >> dbload.sh
     echo "  $mysql_connection -e \"drop table \$table\"" >> dbload.sh
     echo "done" >> dbload.sh
-    echo "$mysql_connection < db.sql" >> dbload.sh
+    echo "$mysql_connection < /tmp/work/db.sql" >> dbload.sh
     cp $db_dump_directory/db.sql .
-    fig_do run --rm web sh ./dbload.sh
+    db_container_id=`docker ps | grep "mysql" | awk '{print $1}'`
+    db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
+    docker_do run -v $(pwd):/tmp/work --link $db_container_name:mysql --rm mysql sh -c '/tmp/work/dbload.sh'
     rm db.sql
   else
     echo "/usr/bin/psql $app --username=$db_username --host=postgres -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
     echo "/usr/bin/pg_restore --username=$db_username --host=postgres --no-acl --no-owner --jobs=2 --dbname=$app /tmp/work/db.dump" >> dbload.sh
-    chmod +x dbload.sh
     cp $db_dump_directory/db.dump .
-    postgres_container_id=`docker ps | grep "postgres" | awk '{print $1}'`
-    postgres_container_name=`docker inspect --format='{{.Name}}' $postgres_container_id`
-    docker_do run -v $(pwd):/tmp/work --link $postgres_container_name:postgres --rm postgres sh -c '/tmp/work/dbload.sh'
+    db_container_id=`docker ps | grep "postgres" | awk '{print $1}'`
+    db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
+    docker_do run -v $(pwd):/tmp/work --link $db_container_name:postgres --rm postgres sh -c '/tmp/work/dbload.sh'
     rm db.dump
   fi
   rm dbload.sh

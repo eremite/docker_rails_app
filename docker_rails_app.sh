@@ -134,3 +134,25 @@ if [ $command = "dbload" ]; then # dbload
   fi
   rm dbload.sh
 fi
+
+if [ $command = "rm" ]; then # rm docker containers interactively
+  data_container_id=`docker inspect --format={{.Id}} /db_data`
+  for container_id in $(docker ps --all --quiet --no-trunc)
+  do
+    if [ $container_id = $data_container_id ]; then
+      continue
+    fi
+    docker inspect --format='{{if .State.ExitCode}} Exited {{end}} {{.Name}} {{.Path}} {{range $i, $arg := .Args}}{{$arg}} {{end}}' $container_id
+    echo -n "delete? [y/N]:"
+    read response
+    if [ "$response" = "q" ]; then
+      break
+    elif [ "$response" = "y" ]; then
+      docker_do rm $container_id
+    fi
+  done
+fi
+
+if [ $command = "rmi" ]; then # remove untagged images
+  docker images -q --filter "dangling=true" | xargs docker rmi
+fi

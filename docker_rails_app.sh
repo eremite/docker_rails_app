@@ -25,13 +25,15 @@ app=$(basename $directory)
 
 db_dump_directory="$META/$app/tmp"
 
-if grep -q mysql $directory/config/database.yml; then
+if grep -q mysql fig.yml; then
   db=mysql
+  db_image=`grep -E 'image: "?mysql' fig.yml | cut -d ' ' -f 4 | sed -e 's/"//g'`
   db_username='root'
   port=3306
 fi
-if grep -q postgres $directory/config/database.yml; then
+if grep -q postgres fig.yml; then
   db=postgresql
+  db_image=`grep -E 'image: "?postgres' fig.yml | cut -d ' ' -f 4 | sed -e 's/"//g'`
   db_username='postgres'
   port=5432
 fi
@@ -121,7 +123,7 @@ if [ $command = "dbload" ]; then # dbload
     cp $db_dump_directory/db.sql .
     db_container_id=`docker ps | grep "mysql" | awk '{print $1}'`
     db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
-    docker_do run -v $(pwd):/tmp/work --link $db_container_name:mysql --rm mysql sh -c '/tmp/work/dbload.sh'
+    docker_do run -v $(pwd):/tmp/work --link $db_container_name:mysql --rm $db_image sh -c '/tmp/work/dbload.sh'
     rm db.sql
   else
     echo "/usr/bin/psql $app --username=$db_username --host=postgres -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
@@ -129,7 +131,7 @@ if [ $command = "dbload" ]; then # dbload
     cp $db_dump_directory/db.dump .
     db_container_id=`docker ps | grep "postgres" | awk '{print $1}'`
     db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
-    docker_do run -v $(pwd):/tmp/work --link $db_container_name:postgres --rm postgres sh -c '/tmp/work/dbload.sh'
+    docker_do run -v $(pwd):/tmp/work --link $db_container_name:postgres --rm $db_image sh -c '/tmp/work/dbload.sh'
     rm db.dump
   fi
   rm dbload.sh

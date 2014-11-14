@@ -162,6 +162,6 @@ fi
 if [ $command = "c" ]; then # Docker clean
   docker ps --quiet | xargs docker kill
   data_container_id=`docker inspect --format={{.Id}} /db_data`
-  docker ps --all --quiet --no-trunc | grep -v $data_container_id | xargs docker rm
+  docker ps --all --quiet --no-trunc | grep -v $data_container_id | xargs docker rm -v
   docker images --quiet --filter "dangling=true" | xargs docker rmi
 fi

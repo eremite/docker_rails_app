@@ -119,19 +119,19 @@ if [ $command = "dbload" ]; then # dbload
     echo "do" >> dbload.sh
     echo "  $mysql_connection -e \"drop table \$table\"" >> dbload.sh
     echo "done" >> dbload.sh
-    echo "$mysql_connection < /tmp/work/db.sql" >> dbload.sh
+    echo "$mysql_connection < /data/$app/db.sql" >> dbload.sh
     cp $db_dump_directory/db.sql .
     db_container_id=`docker ps | grep "mysql" | awk '{print $1}'`
     db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
-    docker_do run -v $(pwd):/tmp/work --link $db_container_name:mysql --rm $db_image sh -c '/tmp/work/dbload.sh'
+    docker_do run --volumes-from=data --link $db_container_name:mysql --rm $db_image sh -c "/data/$app/dbload.sh"
     rm db.sql
   else
     echo "/usr/bin/psql $app --username=$db_username --host=postgres -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
-    echo "/usr/bin/pg_restore --username=$db_username --host=postgres --no-acl --no-owner --jobs=2 --dbname=$app /tmp/work/db.dump" >> dbload.sh
+    echo "/usr/bin/pg_restore --username=$db_username --host=postgres --no-acl --no-owner --jobs=2 --dbname=$app /data/$app/db.dump" >> dbload.sh
     cp $db_dump_directory/db.dump .
     db_container_id=`docker ps | grep "postgres" | awk '{print $1}'`
     db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
-    docker_do run -v $(pwd):/tmp/work --link $db_container_name:postgres --rm $db_image sh -c '/tmp/work/dbload.sh'
+    docker_do run --volumes-from=data --link $db_container_name:postgres --rm $db_image sh -c "/data/$app/dbload.sh"
     rm db.dump
   fi
   rm dbload.sh

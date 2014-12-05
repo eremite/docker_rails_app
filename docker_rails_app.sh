@@ -161,9 +161,9 @@ fi
 
 if [ $command = "c" ]; then # Docker clean
   devbox_container_id=`docker inspect --format={{.Id}} /devbox`
-  docker ps --quiet --no-trunc | grep -v $devbox_container_id | xargs docker kill
+  docker ps --quiet --no-trunc | grep -v $devbox_container_id | xargs --no-run-if-empty docker kill
   data_container_id=`docker inspect --format={{.Id}} /data`
   db_data_container_id=`docker inspect --format={{.Id}} /db_data`
-  docker ps --all --quiet --no-trunc | grep -v $data_container_id | grep -v $db_data_container_id | xargs docker rm -v
-  docker images --quiet --filter "dangling=true" | xargs docker rmi
+  docker ps --all --quiet --no-trunc | grep -v $data_container_id | grep -v $db_data_container_id | xargs --no-run-if-empty docker rm -v
+  docker images --quiet --filter "dangling=true" | xargs --no-run-if-empty docker rmi
 fi

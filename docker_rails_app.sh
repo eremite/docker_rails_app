@@ -121,8 +121,8 @@ if [ $command = "dbload" ]; then # dbload
     echo "done" >> dbload.sh
     echo "$mysql_connection < /data/$app/db.sql" >> dbload.sh
     cp $db_dump_directory/db.sql .
-    db_container_id=`docker ps | grep "mysql" | awk '{print $1}'`
-    db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
+    db_container_name=`fig run -d db`
+    sleep 1 # Wait for fig
     docker_do run --volumes-from=data --link $db_container_name:mysql --rm $db_image sh -c "/data/$app/dbload.sh"
     rm db.sql
   else

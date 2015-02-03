@@ -37,6 +37,7 @@ if grep -q postgres fig.yml; then
   db_username='postgres'
   port=5432
 fi
+db_name=$app
 db_password='docker'
 
 command="$1"
@@ -114,7 +115,7 @@ if [ $command = "dbload" ]; then # dbload
   echo '#!/bin/sh' > dbload.sh
   chmod +x dbload.sh
   if [ $db = "mysql" ]; then
-    mysql_connection="mysql -u $db_username -p'$db_password' -h mysql $app"
+    mysql_connection="mysql -u $db_username -p'$db_password' -h mysql $db_name"
     echo "for table in \$($mysql_connection -e 'show tables' | awk '{ print \$1}' | grep -v '^Tables')" >> dbload.sh
     echo "do" >> dbload.sh
     echo "  $mysql_connection -e \"drop table \$table\"" >> dbload.sh
@@ -126,8 +127,8 @@ if [ $command = "dbload" ]; then # dbload
     docker_do run --volumes-from=data --link $db_container_name:mysql --rm $db_image sh -c "/data/$app/dbload.sh"
     rm db.sql
   else
-    echo "/usr/bin/psql $app --username=$db_username --host=postgres -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
-    echo "/usr/bin/pg_restore --username=$db_username --host=postgres --no-acl --no-owner --jobs=2 --dbname=$app /data/$app/db.dump" >> dbload.sh
+    echo "/usr/bin/psql $db_name --username=$db_username --host=postgres -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
+    echo "/usr/bin/pg_restore --username=$db_username --host=postgres --no-acl --no-owner --jobs=2 --dbname=$db_name /data/$app/db.dump" >> dbload.sh
     cp $db_dump_directory/db.dump .
     db_container_id=`docker ps | grep "postgres" | awk '{print $1}'`
     db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`

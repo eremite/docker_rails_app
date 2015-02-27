@@ -1,11 +1,21 @@
 #!/bin/bash
 
-if [ ! -e fig.yml ]; then
-  echo "Can't find fig.yml!"
+if [ ! -e fig.yml ] && [ ! -e docker-compose.yml ]; then
+  echo "Can't find fig.yml or docker-compose.yml!"
   exit
 fi
 
-fig_do() { echo "+ fig $@" ; fig "$@" ; }
+fig_do() {
+  if [ -e local-docker-compose.yml ]; then
+    fig_file='local-docker-compose.yml'
+  elif [ -e docker-compose.yml ]; then
+    fig_file='docker-compose.yml'
+  else
+    fig_file='fig.yml'
+  fi
+  echo "+ docker-compose -f $fig_file $@"
+  docker-compose -f "$fig_file" "$@"
+}
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
@@ -69,7 +79,7 @@ fi
 if [ $command = "s" ]; then # rails server
   stop_container_matching "3000/tcp"
   sudo rm -f $directory/tmp/pids/server.pid
-  fig_do up
+  fig_do up --no-build
 fi
 
 if [ $command = "k" ]; then # rake

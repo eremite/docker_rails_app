@@ -54,16 +54,9 @@ command="$1"
 shift
 
 if [ $command = "b" ]; then # build
-  if [ -h Dockerfile ]; then # if symlink
-    fullpath=$(readlink -f Dockerfile)
-    rm Dockerfile
-    cp $fullpath Dockerfile
-    fig_do build
-    rm Dockerfile
-    ln -s $fullpath Dockerfile
-  else
-    fig_do build
-  fi
+  sed -i "s:usr/src/app:data/$app:g" Dockerfile
+  fig_do build
+  sed -i "s:data/$app:usr/src/app:g" Dockerfile
 fi
 
 if [ $command = "bundle" ]; then # bundle

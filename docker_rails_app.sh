@@ -5,17 +5,16 @@ if [ ! -e fig.yml ] && [ ! -e docker-compose.yml ]; then
   exit
 fi
 
-fig_do() {
-  if [ -e local-docker-compose.yml ]; then
-    fig_file='local-docker-compose.yml'
-  elif [ -e docker-compose.yml ]; then
-    fig_file='docker-compose.yml'
-  else
-    fig_file='fig.yml'
-  fi
-  echo "+ docker-compose -f $fig_file $@"
-  docker-compose -f "$fig_file" "$@"
-}
+if [ -e $META/$app/symlinks/local-docker-compose.yml ]; then
+  cp $META/$app/symlinks/local-docker-compose.yml .
+  export COMPOSE_FILE="local-docker-compose.yml"
+elif [ -e docker-compose.yml ]; then
+  export COMPOSE_FILE='docker-compose.yml'
+else
+  export COMPOSE_FILE='fig.yml'
+fi
+
+fig_do() { echo "+ docker-compose $@" ; docker-compose "$@" ; }
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
@@ -171,4 +170,9 @@ if [ $command = "c" ]; then # Docker clean
   docker ps --all --quiet --no-trunc | grep -v $devbox_container_id | grep -v $data_container_id | grep -v $db_data_container_id | xargs --no-run-if-empty docker rm -v
   data_image_id=`docker inspect --format={{.Image}} /data`
   docker images --quiet --no-trunc --filter "dangling=true" | grep -v $data_image_id | xargs --no-run-if-empty docker rmi
+fi
+
+# Cleanup
+if [ -e local-docker-compose.yml ]; then
+  rm local-docker-compose.yml
 fi

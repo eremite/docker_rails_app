@@ -52,6 +52,11 @@ db_password='docker'
 command="$1"
 shift
 
+if [ $command = "fig" ]; then # fig
+  fig_do $@
+  fix_file_permissions
+fi
+
 if [ $command = "b" ]; then # build
   sed -i "s:usr/src/app:data/$app:g" Dockerfile
   fig_do build

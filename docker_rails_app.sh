@@ -52,8 +52,8 @@ db_password='docker'
 command="$1"
 shift
 
-if [ $command = "fig" ]; then # fig
-  fig_do $@
+if [ $command = "run" ]; then # run
+  fig_do run $@
   fix_file_permissions
 fi
 

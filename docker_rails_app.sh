@@ -5,15 +5,6 @@ if [ ! -e fig.yml ] && [ ! -e docker-compose.yml ]; then
   exit
 fi
 
-if [ -e $META/$app/local-docker-compose.yml ]; then
-  cp $META/$app/local-docker-compose.yml .
-  export COMPOSE_FILE="local-docker-compose.yml"
-elif [ -e docker-compose.yml ]; then
-  export COMPOSE_FILE='docker-compose.yml'
-else
-  export COMPOSE_FILE='fig.yml'
-fi
-
 fig_do() { echo "+ docker-compose $@" ; docker-compose "$@" ; }
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
@@ -34,15 +25,24 @@ app=$(basename $directory)
 
 db_dump_directory="$META/$app/tmp"
 
+if [ -e $META/$app/local-docker-compose.yml ]; then
+  cp $META/$app/local-docker-compose.yml .
+  export COMPOSE_FILE="local-docker-compose.yml"
+elif [ -e docker-compose.yml ]; then
+  export COMPOSE_FILE='docker-compose.yml'
+else
+  export COMPOSE_FILE='fig.yml'
+fi
+
 if grep -q mysql fig.yml; then
   db=mysql
-  db_image=`grep -E 'image: "?mysql' fig.yml | cut -d ' ' -f 4 | sed -e 's/"//g'`
+  db_image=`grep -E 'image: "?mysql' $COMPOSE_FILE | cut -d ' ' -f 4 | sed -e 's/"//g'`
   db_username='root'
   port=3306
 fi
 if grep -q postgres fig.yml; then
   db=postgresql
-  db_image=`grep -E 'image: "?postgres' fig.yml | cut -d ' ' -f 4 | sed -e 's/"//g'`
+  db_image=`grep -E 'image: "?postgres' $COMPOSE_FILE | cut -d ' ' -f 4 | sed -e 's/"//g'`
   db_username='postgres'
   port=5432
 fi

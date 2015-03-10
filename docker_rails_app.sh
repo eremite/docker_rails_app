@@ -5,8 +5,8 @@ if [ ! -e fig.yml ] && [ ! -e docker-compose.yml ]; then
   exit
 fi
 
-if [ -e $META/$app/symlinks/local-docker-compose.yml ]; then
-  cp $META/$app/symlinks/local-docker-compose.yml .
+if [ -e $META/$app/local-docker-compose.yml ]; then
+  cp $META/$app/local-docker-compose.yml .
   export COMPOSE_FILE="local-docker-compose.yml"
 elif [ -e docker-compose.yml ]; then
   export COMPOSE_FILE='docker-compose.yml'

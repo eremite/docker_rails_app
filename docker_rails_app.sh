@@ -46,7 +46,7 @@ if grep -q postgres fig.yml; then
   db_username='postgres'
   port=5432
 fi
-db_name=$app
+db_name=${app//./}
 db_password='docker'
 
 command="$1"

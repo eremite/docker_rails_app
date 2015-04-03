@@ -34,13 +34,13 @@ else
   export COMPOSE_FILE='fig.yml'
 fi
 
-if grep -q mysql fig.yml; then
+if grep -q mysql $COMPOSE_FILE; then
   db=mysql
   db_image=`grep -E 'image: "?mysql' $COMPOSE_FILE | cut -d ' ' -f 4 | sed -e 's/"//g'`
   db_username='root'
   port=3306
 fi
-if grep -q postgres fig.yml; then
+if grep -q postgres $COMPOSE_FILE; then
   db=postgresql
   db_image=`grep -E 'image: "?postgres' $COMPOSE_FILE | cut -d ' ' -f 4 | sed -e 's/"//g'`
   db_username='postgres'

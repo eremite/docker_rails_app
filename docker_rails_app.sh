@@ -80,7 +80,11 @@ if [ $command = "s" ]; then # rails server
 fi
 
 if [ $command = "k" ]; then # rake
-  fig_do run --rm web bundle exec rake $@
+  if [ -e Gemfile ]; then
+    fig_do run --rm web bundle exec rake $@
+  else
+    fig_do run --rm web rake $@
+  fi
 fi
 
 if [ $command = "t" ]; then # test

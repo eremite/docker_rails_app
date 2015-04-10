@@ -26,7 +26,7 @@ app=$(basename $directory)
 db_dump_directory="$META/$app/tmp"
 
 if [ -e $META/$app/docker-compose.yml ]; then
-  cp $META/$app/local-docker-compose.yml .
+  cp $META/$app/docker-compose.yml local-docker-compose.yml
   export COMPOSE_FILE="local-docker-compose.yml"
 elif [ -e docker-compose.yml ]; then
   export COMPOSE_FILE='docker-compose.yml'

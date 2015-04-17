@@ -63,6 +63,14 @@ if [ $command = "b" ]; then # build
   sed -i "s:data/$app:usr/src/app:g" Dockerfile
 fi
 
+if [ $command = "deploy" ]; then # deploy
+  tag="custombit/$app:$(date +"%F-%H%M")"
+  docker_do build --no-cache --force-rm=true --tag=$tag .
+  if [ "$?" == '0' ]; then
+    docker_do push $tag
+  fi
+fi
+
 if [ $command = "bundle" ]; then # bundle
   fig_do run --rm web bundle $@
   fix_file_permissions

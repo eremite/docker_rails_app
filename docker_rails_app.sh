@@ -5,7 +5,7 @@ if [ ! -e fig.yml ] && [ ! -e docker-compose.yml ]; then
   exit
 fi
 
-fig_do() { echo "+ docker-compose $@" ; docker-compose "$@" ; }
+compose_do() { echo "+ docker-compose $@" ; docker-compose "$@" ; }
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
@@ -53,13 +53,13 @@ command="$1"
 shift
 
 if [ $command = "run" ]; then # run
-  fig_do run $@
+  compose_do run $@
   fix_file_permissions
 fi
 
 if [ $command = "b" ]; then # build
   sed -i "s:usr/src/app:data/$app:g" Dockerfile
-  fig_do build
+  compose_do build
   sed -i "s:data/$app:usr/src/app:g" Dockerfile
 fi
 
@@ -72,34 +72,34 @@ if [ $command = "deploy" ]; then # deploy
 fi
 
 if [ $command = "bundle" ]; then # bundle
-  fig_do run --rm web bundle $@
+  compose_do run --rm web bundle $@
   fix_file_permissions
 fi
 
 if [ $command = "r" ]; then # rails
-  fig_do run --rm web bundle exec rails $@
+  compose_do run --rm web bundle exec rails $@
   fix_file_permissions
 fi
 
 if [ $command = "s" ]; then # rails server
   sudo rm -f $directory/tmp/pids/server.pid
-  fig_do up --no-build
+  compose_do up --no-build
 fi
 
 if [ $command = "k" ]; then # rake
   if [ -e Gemfile ]; then
-    fig_do run --rm web bundle exec rake $@
+    compose_do run --rm web bundle exec rake $@
   else
-    fig_do run --rm web rake $@
+    compose_do run --rm web rake $@
   fi
 fi
 
 if [ $command = "t" ]; then # test
-  fig_do run --rm web bundle exec guard
+  compose_do run --rm web bundle exec guard
 fi
 
 if [ $command = "bash" ]; then # bash
-  fig_do run --rm web bash
+  compose_do run --rm web bash
 fi
 
 if [ $command = "dbfetch" ]; then # dbfetch

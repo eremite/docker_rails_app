@@ -1,11 +1,19 @@
 #!/bin/bash
 
-if [ ! -e fig.yml ] && [ ! -e docker-compose.yml ]; then
-  echo "Can't find fig.yml or docker-compose.yml!"
-  exit
-fi
-
-compose_do() { echo "+ docker-compose $@" ; docker-compose "$@" ; }
+compose_do() {
+  env_file='.docker.env'
+  echo "+ docker-compose $@"
+  perl -0777 -i -pe 's|volumes:\n(\s+)- .:/usr/src/app|volumes_from:\n$1- data|g' docker-compose.yml
+  if [ -e $META/$app/environment_variables ]; then
+    cp $env_file{,.backup}
+    cat "$META/$app/environment_variables" >> $env_file
+  fi
+  docker-compose "$@"
+  if [ -e "$env_file.backup" ]; then
+    mv $env_file{.backup,}
+  fi
+  perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' docker-compose.yml
+}
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
@@ -25,10 +33,7 @@ app=$(basename $directory)
 
 db_dump_directory="$META/$app/tmp"
 
-if [ -e $META/$app/docker-compose.yml ]; then
-  cp $META/$app/docker-compose.yml local-docker-compose.yml
-  export COMPOSE_FILE="local-docker-compose.yml"
-elif [ -e docker-compose.yml ]; then
+if [ -e docker-compose.yml ]; then
   export COMPOSE_FILE='docker-compose.yml'
 else
   export COMPOSE_FILE='fig.yml'

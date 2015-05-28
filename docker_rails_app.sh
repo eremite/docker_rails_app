@@ -82,7 +82,6 @@ if [ $command = "r" ]; then # rails
 fi
 
 if [ $command = "s" ]; then # rails server
-  stop_container_matching "3000/tcp"
   sudo rm -f $directory/tmp/pids/server.pid
   fig_do up --no-build
 fi

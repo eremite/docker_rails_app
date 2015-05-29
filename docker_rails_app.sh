@@ -1,18 +1,24 @@
 #!/bin/bash
 
+if [ -e docker-compose.yml ]; then
+  export COMPOSE_FILE='docker-compose.yml'
+else
+  export COMPOSE_FILE='fig.yml'
+fi
+
 compose_do() {
   env_file='.docker.env'
+  local_env_file='.docker.local.env'
   echo "+ docker-compose $@"
-  perl -0777 -i -pe 's|volumes:\n(\s+)- .:/usr/src/app|volumes_from:\n$1- data|g' docker-compose.yml
-  if [ -e $META/$app/environment_variables ]; then
-    cp $env_file{,.backup}
-    cat "$META/$app/environment_variables" >> $env_file
+  perl -0777 -i -pe 's|volumes:\n(\s+)- .:/usr/src/app|volumes_from:\n$1- data|g' $COMPOSE_FILE
+  if [ -e "$META/$app/environment_variables" ]; then
+    cp $env_file $local_env_file
+    cat "$META/$app/environment_variables" >> $local_env_file
+    perl -0777 -i -pe 's|env_file: .docker.env|env_file: .docker.local.env|g' $COMPOSE_FILE
   fi
   docker-compose "$@"
-  if [ -e "$env_file.backup" ]; then
-    mv $env_file{.backup,}
-  fi
-  perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' docker-compose.yml
+  perl -0777 -i -pe 's|env_file: .docker.local.env|env_file: .docker.env|g' $COMPOSE_FILE
+  perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' $COMPOSE_FILE
 }
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
@@ -32,12 +38,6 @@ directory=$(pwd)
 app=$(basename $directory)
 
 db_dump_directory="$META/$app/tmp"
-
-if [ -e docker-compose.yml ]; then
-  export COMPOSE_FILE='docker-compose.yml'
-else
-  export COMPOSE_FILE='fig.yml'
-fi
 
 if grep -q mysql $COMPOSE_FILE; then
   db=mysql

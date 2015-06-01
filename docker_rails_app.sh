@@ -16,9 +16,12 @@ compose_do() {
     cat "$META/$app/environment_variables" >> $local_env_file
     perl -0777 -i -pe 's|env_file: .docker.env|env_file: .docker.local.env|g' $COMPOSE_FILE
   fi
+  {
+    sleep 3 # Wait for docker-compose command to start.
+    perl -0777 -i -pe 's|env_file: .docker.local.env|env_file: .docker.env|g' $COMPOSE_FILE
+    perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' $COMPOSE_FILE
+  } &
   docker-compose "$@"
-  perl -0777 -i -pe 's|env_file: .docker.local.env|env_file: .docker.env|g' $COMPOSE_FILE
-  perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' $COMPOSE_FILE
 }
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }

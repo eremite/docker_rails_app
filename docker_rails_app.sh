@@ -9,9 +9,13 @@ fi
 compose_do() {
   echo "+ docker-compose $@"
   perl -0777 -i -pe 's|volumes:\n(\s+)- .:/usr/src/app|volumes_from:\n$1- data|g' $COMPOSE_FILE
+  perl -0777 -i -pe 's|volumes_from:\n(\s+)- db_data|# volumes_from:\n$1# - data|g' $COMPOSE_FILE
+  perl -0777 -i -pe 's|command: mysqld|# command: mysqld|g' $COMPOSE_FILE
   {
     sleep 3 # Wait for docker-compose command to start.
     perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' $COMPOSE_FILE
+    perl -0777 -i -pe 's|# volumes_from:\n(\s+)# - data|volumes_from:\n$1- db_data|g' $COMPOSE_FILE
+    perl -0777 -i -pe 's|# command: mysqld|command: mysqld|g' $COMPOSE_FILE
   } &
   docker-compose "$@"
 }

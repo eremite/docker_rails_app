@@ -11,6 +11,9 @@ compose_do() {
   perl -0777 -i -pe 's|volumes:\n(\s+)- .:/usr/src/app|volumes_from:\n$1- data|g' $COMPOSE_FILE
   perl -0777 -i -pe 's|volumes_from:\n(\s+)- db_data|# volumes_from:\n$1# - data|g' $COMPOSE_FILE
   perl -0777 -i -pe 's|command: mysqld|# command: mysqld|g' $COMPOSE_FILE
+  if [ -e .docker_overrides.env ]; then
+    cp .docker_overrides.env "$META/$app/docker_overrides.env"
+  fi
   {
     sleep 3 # Wait for docker-compose command to start.
     perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' $COMPOSE_FILE

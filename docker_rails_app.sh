@@ -90,7 +90,7 @@ fi
 
 if [ $command = "s" ]; then # rails server
   sudo rm -f $directory/tmp/pids/server.pid
-  compose_do up --no-build
+  compose_do up --no-build --x-smart-recreate
 fi
 
 if [ $command = "k" ]; then # rake

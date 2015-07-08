@@ -194,8 +194,3 @@ if [ $command = "c" ]; then # Docker clean
   data_image_id=`docker inspect --format={{.Image}} /data`
   docker images --quiet --no-trunc --filter "dangling=true" | grep -v $data_image_id | xargs --no-run-if-empty docker rmi
 fi
-
-# Cleanup
-if [ -e local-docker-compose.yml ]; then
-  rm local-docker-compose.yml
-fi

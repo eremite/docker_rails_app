@@ -71,8 +71,13 @@ if [ $command = "b" ]; then # build
 fi
 
 if [ $command = "deploy" ]; then # deploy
-  tag="custombit/$app:$(date +"%F-%H%M")"
-  docker_do build --no-cache --force-rm=true --tag=$tag .
+  owner="custombit"
+  environment=$(git symbolic-ref --short HEAD)
+  if [ $environment = "master" ]; then
+    environment="production"
+  fi
+  tag="custombit/${app}:${environment}_$(date +"%F-%H%M")"
+  docker_do build --force-rm=true --tag=$tag .
   if [ "$?" == '0' ]; then
     docker_do push $tag
   fi

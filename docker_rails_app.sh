@@ -9,7 +9,6 @@ fi
 compose_do() {
   echo "+ docker-compose $@"
   perl -0777 -i -pe 's|volumes:\n(\s+)- .:/usr/src/app|volumes_from:\n$1- data|g' $COMPOSE_FILE
-  perl -0777 -i -pe 's|volumes_from:\n(\s+)- db_data|# volumes_from:\n$1# - data|g' $COMPOSE_FILE
   perl -0777 -i -pe 's|command: mysqld|# command: mysqld|g' $COMPOSE_FILE
   if [ -e .docker_overrides.env ]; then
     cp .docker_overrides.env "$META/$app/docker_overrides.env"
@@ -17,7 +16,6 @@ compose_do() {
   {
     sleep 3 # Wait for docker-compose command to start.
     perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' $COMPOSE_FILE
-    perl -0777 -i -pe 's|# volumes_from:\n(\s+)# - data|volumes_from:\n$1- db_data|g' $COMPOSE_FILE
     perl -0777 -i -pe 's|# command: mysqld|command: mysqld|g' $COMPOSE_FILE
   } &
   docker-compose "$@"
@@ -170,7 +168,7 @@ if [ $command = "dbload" ]; then # dbload
 fi
 
 if [ $command = "rm" ]; then # rm docker containers interactively
-  data_container_id=`docker inspect --format={{.Id}} /db_data`
+  data_container_id=`docker inspect --format={{.Id}} /data`
   for container_id in $(docker ps --all --quiet --no-trunc)
   do
     if [ $container_id = $data_container_id ]; then
@@ -195,8 +193,7 @@ if [ $command = "c" ]; then # Docker clean
   devbox_container_id=`docker inspect --format={{.Id}} /devbox`
   docker ps --quiet --no-trunc | grep -v $devbox_container_id | xargs --no-run-if-empty docker stop
   data_container_id=`docker inspect --format={{.Id}} /data`
-  db_data_container_id=`docker inspect --format={{.Id}} /db_data`
-  docker ps --all --quiet --no-trunc | grep -v $devbox_container_id | grep -v $data_container_id | grep -v $db_data_container_id | xargs --no-run-if-empty docker rm -v
+  docker ps --all --quiet --no-trunc | grep -v $devbox_container_id | grep -v $data_container_id | xargs --no-run-if-empty docker rm -v
   data_image_id=`docker inspect --format={{.Image}} /data`
   docker images --quiet --no-trunc --filter "dangling=true" | grep -v $data_image_id | xargs --no-run-if-empty docker rmi
 fi

@@ -37,7 +37,7 @@ stop_container_matching() {
 }
 
 directory=$(pwd)
-app=$(basename $directory)
+app=$(expr match $directory '/data/\([^/]*\)')
 
 db_dump_directory="$META/$app/tmp"
 
@@ -65,6 +65,7 @@ if [ $command = "run" ]; then # run
 fi
 
 if [ $command = "b" ]; then # build
+  app=$(expr match $directory '/data/\(.*\)')
   sed -i "s:usr/src/app:data/$app:g" Dockerfile
   compose_do build
   sed -i "s:data/$app:usr/src/app:g" Dockerfile

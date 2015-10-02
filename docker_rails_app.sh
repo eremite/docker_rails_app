@@ -34,7 +34,7 @@ stop_container_matching() {
   fi
 }
 
-directory=$(pwd)
+directory=$(pwd -P)
 app=$(expr match $directory '/data/\([^/]*\)')
 
 db_dump_directory="$META/$app/tmp"

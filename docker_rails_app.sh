@@ -96,6 +96,7 @@ fi
 
 if [ $command = "s" ]; then # rails server
   sudo rm -f $directory/tmp/pids/server.pid
+  sudo rm -f $directory/passenger.*
   compose_do up --no-build
 fi
 

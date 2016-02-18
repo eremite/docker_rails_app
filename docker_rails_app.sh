@@ -116,6 +116,17 @@ if [ $command = "bash" ]; then # bash
   compose_do run --rm web bash
 fi
 
+if [ $command = "rs" ]; then # restart (docker clean, rake db:setup, rails server)
+  devbox_container_id=`docker inspect --format={{.Id}} /devbox`
+  docker ps --quiet --no-trunc | grep -v $devbox_container_id | xargs --no-run-if-empty docker stop
+  data_container_id=`docker inspect --format={{.Id}} /data`
+  docker ps --all --quiet --no-trunc | grep -v $devbox_container_id | grep -v $data_container_id | xargs --no-run-if-empty docker rm -v
+  compose_do run --rm web bundle exec rake db:setup
+  sudo rm -f $directory/tmp/pids/server.pid
+  sudo rm -f $directory/passenger.*
+  compose_do up --no-build
+fi
+
 if [ $command = "dbfetch" ]; then # dbfetch
   mkdir -p $db_dump_directory
   if grep -q heroku .git/config; then

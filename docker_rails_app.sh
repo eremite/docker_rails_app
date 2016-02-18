@@ -6,16 +6,18 @@ else
   export COMPOSE_FILE='fig.yml'
 fi
 
+deploy_directory="usr/src/app"
+
 compose_do() {
   echo "+ docker-compose $@"
-  perl -0777 -i -pe 's|volumes:\n(\s+)- .:/usr/src/app|volumes_from:\n$1- data|g' $COMPOSE_FILE
+  perl -0777 -i -pe "s|volumes:\n(\s+)- .:/$deploy_directory|volumes_from:\\n\$1- data|g" $COMPOSE_FILE
   perl -0777 -i -pe 's|command: mysqld|# command: mysqld|g' $COMPOSE_FILE
   if [ -e .docker_overrides.env ]; then
     cp .docker_overrides.env "$META/$app/docker_overrides.env"
   fi
   {
     sleep 3 # Wait for docker-compose command to start.
-    perl -0777 -i -pe 's|volumes_from:\n(\s+)- data|volumes:\n$1- .:/usr/src/app|g' $COMPOSE_FILE
+    perl -0777 -i -pe "s|volumes_from:\n(\s+)- data|volumes:\\n\$1- .:/$deploy_directory|g" $COMPOSE_FILE
     perl -0777 -i -pe 's|# command: mysqld|command: mysqld|g' $COMPOSE_FILE
   } &
   docker-compose "$@"
@@ -64,9 +66,9 @@ fi
 
 if [ $command = "b" ]; then # build
   app=$(expr match $directory '/data/\(.*\)')
-  sed -i "s:usr/src/app:data/$app:g" Dockerfile
+  sed -i "s:$deploy_directory:data/$app:g" Dockerfile
   compose_do build
-  sed -i "s:data/$app:usr/src/app:g" Dockerfile
+  sed -i "s:data/$app:$deploy_directory:g" Dockerfile
 fi
 
 if [ $command = "deploy" ]; then # deploy

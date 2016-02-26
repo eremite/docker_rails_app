@@ -6,20 +6,11 @@ else
   export COMPOSE_FILE='fig.yml'
 fi
 
-deploy_directory="usr/src/app"
-
 compose_do() {
   echo "+ docker-compose $@"
-  perl -0777 -i -pe "s|volumes:\n(\s+)- .:/$deploy_directory|volumes_from:\\n\$1- data|g" $COMPOSE_FILE
-  perl -0777 -i -pe 's|command: mysqld|# command: mysqld|g' $COMPOSE_FILE
   if [ -e .docker_overrides.env ]; then
     cp .docker_overrides.env "$META/$app/docker_overrides.env"
   fi
-  {
-    sleep 3 # Wait for docker-compose command to start.
-    perl -0777 -i -pe "s|volumes_from:\n(\s+)- data|volumes:\\n\$1- .:/$deploy_directory|g" $COMPOSE_FILE
-    perl -0777 -i -pe 's|# command: mysqld|command: mysqld|g' $COMPOSE_FILE
-  } &
   docker-compose "$@"
 }
 
@@ -65,10 +56,7 @@ if [ $command = "run" ]; then # run
 fi
 
 if [ $command = "b" ]; then # build
-  app=$(expr match $directory '/data/\(.*\)')
-  sed -i "s:$deploy_directory:data/$app:g" Dockerfile
   compose_do build
-  sed -i "s:data/$app:$deploy_directory:g" Dockerfile
 fi
 
 if [ $command = "deploy" ]; then # deploy
@@ -117,10 +105,8 @@ if [ $command = "bash" ]; then # bash
 fi
 
 if [ $command = "rs" ]; then # restart (docker clean, rake db:setup, rails server)
-  devbox_container_id=`docker inspect --format={{.Id}} /devbox`
-  docker ps --quiet --no-trunc | grep -v $devbox_container_id | xargs --no-run-if-empty docker stop
-  data_container_id=`docker inspect --format={{.Id}} /data`
-  docker ps --all --quiet --no-trunc | grep -v $devbox_container_id | grep -v $data_container_id | xargs --no-run-if-empty docker rm -v
+  docker ps --quiet --no-trunc | xargs --no-run-if-empty docker stop
+  docker ps --all --quiet --no-trunc | xargs --no-run-if-empty docker rm -v
   compose_do run --rm web bundle exec rake db:setup
   sudo rm -f $directory/tmp/pids/server.pid
   sudo rm -f $directory/passenger.*
@@ -204,10 +190,7 @@ if [ $command = "rmi" ]; then # remove untagged images
 fi
 
 if [ $command = "c" ]; then # Docker clean
-  devbox_container_id=`docker inspect --format={{.Id}} /devbox`
-  docker ps --quiet --no-trunc | grep -v $devbox_container_id | xargs --no-run-if-empty docker stop
-  data_container_id=`docker inspect --format={{.Id}} /data`
-  docker ps --all --quiet --no-trunc | grep -v $devbox_container_id | grep -v $data_container_id | xargs --no-run-if-empty docker rm -v
-  data_image_id=`docker inspect --format={{.Image}} /data`
-  docker images --quiet --no-trunc --filter "dangling=true" | grep -v $data_image_id | xargs --no-run-if-empty docker rmi
+  docker ps --quiet --no-trunc | xargs --no-run-if-empty docker stop
+  docker ps --all --quiet --no-trunc | xargs --no-run-if-empty docker rm -v
+  docker images --quiet --no-trunc --filter "dangling=true" | xargs --no-run-if-empty docker rmi
 fi

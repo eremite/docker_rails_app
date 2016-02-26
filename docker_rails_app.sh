@@ -1,15 +1,18 @@
 #!/bin/bash
 
-if [ -e docker-compose.yml ]; then
-  export COMPOSE_FILE='docker-compose.yml'
-else
-  export COMPOSE_FILE='fig.yml'
-fi
+user=$(whoami)
+directory=$(pwd -P)
+app=$(expr match $directory "$DATA/\([^/]*\)")
+db_dump_directory="$META/$app/tmp"
+
+export COMPOSE_FILE='docker-compose.yml'
 
 compose_do() {
   echo "+ docker-compose $@"
   if [ -e .docker_overrides.env ]; then
     cp .docker_overrides.env "$META/$app/docker_overrides.env"
+  elif [ -e "$META/$app/docker_overrides.env" ]; then
+    cp "$META/$app/docker_overrides.env" .docker_overrides.env
   fi
   docker-compose "$@"
 }
@@ -17,7 +20,7 @@ compose_do() {
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
 fix_file_permissions() {
-  find . \! -user dev -print0 | xargs -0 -I % sh -c 'sudo chmod g+w "%"; sudo chown dev:dev "%"'
+  find . \! -user $user -print0 | xargs -0 -I % sh -c "sudo chmod g+w \"%\"; sudo chown $user:$user \"%\""
 }
 
 stop_container_matching() {
@@ -26,11 +29,6 @@ stop_container_matching() {
     docker_do stop $running_server_id
   fi
 }
-
-directory=$(pwd -P)
-app=$(expr match $directory '/data/\([^/]*\)')
-
-db_dump_directory="$META/$app/tmp"
 
 if grep -q mysql $COMPOSE_FILE; then
   db=mysql

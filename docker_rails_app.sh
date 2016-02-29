@@ -7,6 +7,9 @@ db_dump_directory="$META/$app/tmp"
 
 export COMPOSE_FILE='docker-compose.yml'
 
+
+docker_do() { echo "+ docker $@" ; docker "$@" ; }
+
 compose_do() {
   echo "+ docker-compose $@"
   if [ -e .docker_overrides.env ]; then
@@ -16,8 +19,6 @@ compose_do() {
   fi
   docker-compose "$@"
 }
-
-docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
 fix_file_permissions() {
   find . \! -user $user -print0 | xargs -0 -I % sh -c "sudo chmod g+w \"%\"; sudo chown $user:$user \"%\""

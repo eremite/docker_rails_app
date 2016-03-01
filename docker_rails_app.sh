@@ -95,10 +95,6 @@ if [ $command = "k" ]; then # rake
   fi
 fi
 
-if [ $command = "t" ]; then # test
-  compose_do run --rm web bundle exec guard
-fi
-
 if [ $command = "bash" ]; then # bash
   compose_do run --rm web bash
 fi
@@ -192,4 +188,12 @@ if [ $command = "c" ]; then # Docker clean
   docker ps --quiet --no-trunc | xargs --no-run-if-empty docker stop
   docker ps --all --quiet --no-trunc | xargs --no-run-if-empty docker rm -v
   docker images --quiet --no-trunc --filter "dangling=true" | xargs --no-run-if-empty docker rmi
+fi
+
+if [ $command = "t" ]; then # Tail development logs
+  tail -f log/development.log
+fi
+
+if [ $command = "g" ]; then # Tail development logs and grep for '###'
+  tail -f log/development.log | grep '###'
 fi

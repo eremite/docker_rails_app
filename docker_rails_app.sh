@@ -95,6 +95,7 @@ if [ $command = "k" ]; then # rake
   else
     compose_do run --rm web rake $@
   fi
+  fix_file_permissions
 fi
 
 if [ $command = "bash" ]; then # bash

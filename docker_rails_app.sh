@@ -196,3 +196,8 @@ fi
 if [ $command = "g" ]; then # Tail development logs and grep for '###'
   tail -f log/development.log | grep '###'
 fi
+
+if [ $command = "a" ]; then # api
+  compose_do run --rm api $@
+  fix_file_permissions
+fi

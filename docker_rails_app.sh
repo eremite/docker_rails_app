@@ -61,16 +61,12 @@ if [ $command = "b" ]; then # build
 fi
 
 if [ $command = "deploy" ]; then # deploy
-  owner="custombit"
   environment=$(git symbolic-ref --short HEAD)
   if [ $environment = "master" ]; then
     environment="production"
   fi
-  tag="custombit/${app}:${environment}_$(date +"%F-%H%M")"
-  docker_do build --force-rm=true --tag=$tag .
-  if [ "$?" == '0' ]; then
-    docker_do push $tag
-  fi
+  tag="${environment}_$(date +"%F-%H%M")"
+  hub release create $tag
 fi
 
 if [ $command = "bundle" ]; then # bundle

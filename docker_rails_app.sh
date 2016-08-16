@@ -31,23 +31,6 @@ stop_container_matching() {
   fi
 }
 
-if [ -e $COMPOSE_FILE ]; then
-  if grep -q mysql $COMPOSE_FILE; then
-    db=mysql
-    db_image=`grep -E 'image: "?mysql' $COMPOSE_FILE | cut -d ' ' -f 4 | sed -e 's/"//g'`
-    db_username='root'
-    port=3306
-  fi
-  if grep -q postgres $COMPOSE_FILE; then
-    db=postgresql
-    db_image=`grep -E 'image: "?postgres' $COMPOSE_FILE | cut -d ' ' -f 4 | sed -e 's/"//g'`
-    db_username='postgres'
-    port=5432
-  fi
-fi
-db_name=${app//./}
-db_password='docker'
-
 command="$1"
 shift
 
@@ -136,33 +119,6 @@ if [ $command = "dbfetch" ]; then # dbfetch
   if [ -e $db_dump_directory/db.dump ]; then
     cp $db_dump_directory/db.dump $db_dump_directory/db.$(date +"%Y.%m.%d").dump
   fi
-fi
-
-if [ $command = "dbload" ]; then # dbload
-  echo '#!/bin/sh' > dbload.sh
-  chmod +x dbload.sh
-  if [ $db = "mysql" ]; then
-    mysql_connection="mysql -u $db_username -p'$db_password' -h mysql $db_name"
-    echo "for table in \$($mysql_connection -e 'show tables' | awk '{ print \$1}' | grep -v '^Tables')" >> dbload.sh
-    echo "do" >> dbload.sh
-    echo "  $mysql_connection -e \"drop table \$table\"" >> dbload.sh
-    echo "done" >> dbload.sh
-    echo "$mysql_connection < /data/$app/db.sql" >> dbload.sh
-    cp $db_dump_directory/db.sql .
-    db_container_id=`docker ps | grep "mysql" | awk '{print $1}'`
-    db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
-    docker_do run --volumes-from=data --link $db_container_name:mysql --rm $db_image sh -c "/data/$app/dbload.sh"
-    rm db.sql
-  else
-    echo "/usr/bin/psql $db_name --username=$db_username --host=postgres -t -c 'drop schema public cascade; create schema public;'" >> dbload.sh
-    echo "/usr/bin/pg_restore --username=$db_username --host=postgres --no-acl --no-owner --jobs=2 --dbname=$db_name /data/$app/db.dump" >> dbload.sh
-    cp $db_dump_directory/db.dump .
-    db_container_id=`docker ps | grep "postgres" | awk '{print $1}'`
-    db_container_name=`docker inspect --format='{{.Name}}' $db_container_id`
-    docker_do run --volumes-from=data --link $db_container_name:postgres --rm $db_image sh -c "/data/$app/dbload.sh"
-    rm db.dump
-  fi
-  rm dbload.sh
 fi
 
 if [ $command = "rm" ]; then # rm docker containers interactively

@@ -7,6 +7,13 @@ db_dump_directory="$META/$app/tmp"
 
 export COMPOSE_FILE='docker-compose.yml'
 
+if [ -e Gemfile ]; then
+  if grep -q "gem 'rails', '5" Gemfile; then
+    rake_command='rails'
+  else
+    rake_command='rake'
+  fi
+fi
 
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
@@ -74,7 +81,7 @@ fi
 
 if [ $command = "k" ]; then # rake
   if [ -e Gemfile ]; then
-    compose_do run --rm web bundle exec rake $@
+    compose_do run --rm web bundle exec $rake_command $@
   else
     compose_do run --rm web rake $@
   fi
@@ -160,4 +167,8 @@ fi
 if [ $command = "a" ]; then # api
   compose_do run --rm api $@
   fix_file_permissions
+fi
+
+if [ $command = "d" ]; then # rake db:setup
+  compose_do run --rm web bundle exec $rake_command db:setup
 fi

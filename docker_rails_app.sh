@@ -66,7 +66,11 @@ if [ $command = "deploy" ]; then # deploy
     environment="production"
   fi
   tag="${environment}_$(date +"%F-%H%M")"
-  hub release create $tag
+  commit_range="$(git tag -l | grep $environment | tail -n 1)..$environment"
+  # Extract issue numbers from the branch names in the merge commits
+  message=$(git log --merges --abbrev-commit --pretty=oneline "$commit_range" | grep -Po "'[0-9.]+" | tr "'" "#")
+  printf -v message "$environment $(date +"%m/%d/%Y %I:%M%p")\n\n$message"
+  hub release create $tag -m "$message"
 fi
 
 if [ $command = "bundle" ]; then # bundle

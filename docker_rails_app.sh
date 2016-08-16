@@ -15,6 +15,14 @@ if [ -e Gemfile ]; then
   fi
 fi
 
+if [ -e Dockerfile ]; then
+  if grep -q alpine Dockerfile; then
+    shell_command='sh'
+  else
+    shell_command='bash'
+  fi
+fi
+
 docker_do() { echo "+ docker $@" ; docker "$@" ; }
 
 compose_do() {
@@ -88,8 +96,8 @@ if [ $command = "k" ]; then # rake
   fix_file_permissions
 fi
 
-if [ $command = "bash" ]; then # bash
-  compose_do run --rm web bash
+if [ $command = "bash" ] || [ $command = "sh" ]; then # bash
+  compose_do run --rm web $rake_command
 fi
 
 if [ $command = "rs" ]; then # restart (docker clean, rake db:setup, rails server)

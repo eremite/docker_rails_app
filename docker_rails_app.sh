@@ -179,5 +179,24 @@ if [ $command = "n" ]; then # cat notes
 fi
 
 if [ $command = "d" ]; then # rake db:setup
-  compose_do run --rm web bundle exec $rake_command db:setup
+  if [ -e "bin/setup" ]; then
+    ./bin/setup
+  else
+    compose_do run --rm web bundle exec $rake_command db:setup
+  fi
+fi
+
+if [ $command = "a" ]; then # approve
+  entrypoint="bundle exec $rake_command test"
+  if grep -q "rubocop" Gemfile; then
+    entrypoint="$entrypoint && rubocop"
+  fi
+  if grep -q "slim_lint" Gemfile; then
+    entrypoint="$entrypoint && slim-lint app/views"
+  fi
+  compose_do run --rm web sh -c "$entrypoint"
+fi
+
+if [ $command = "p" ]; then # ruboco[p]
+  compose_do run --rm web rubocop --auto-correct
 fi

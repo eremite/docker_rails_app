@@ -99,7 +99,7 @@ if [ $command = "k" ]; then # rake
 fi
 
 if [ $command = "bash" ] || [ $command = "sh" ]; then # bash
-  compose_do run --rm web $rake_command
+  compose_do run --rm web $command
 fi
 
 if [ $command = "rs" ]; then # restart (docker clean, rake db:setup, rails server)

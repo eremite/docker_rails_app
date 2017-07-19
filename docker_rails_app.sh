@@ -174,9 +174,8 @@ if [ $command = "g" ]; then # Tail development logs and grep for '###'
   tail -f log/development.log | grep '###'
 fi
 
-if [ $command = "a" ]; then # api
-  compose_do run --rm api $@
-  fix_file_permissions
+if [ $command = "n" ]; then # cat notes
+  tail -n300 notes.md
 fi
 
 if [ $command = "d" ]; then # rake db:setup
